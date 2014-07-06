@@ -28,7 +28,7 @@ Storage.o: Storage.h Storage.cpp
 
 .PHONY: clean
 clean:
-	-rm -f Agenda *.o *~
+	-rm -f  server *.o *~
 
 .PHONY: run
 run:
