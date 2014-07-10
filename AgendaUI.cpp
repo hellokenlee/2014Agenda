@@ -1,22 +1,22 @@
 // Copyright @2014KenLee
-
+#include <iostream>
+#include <iomanip>
+#include <cstdlib>
 #include "AgendaUI.h"
-
 using std::endl;
 using std::cout;
 using std::cin;
 using std::setw;
 using std::list;
 using std::string;
-
 AgendaUI::AgendaUI() {
-	userName_="";
-	userPassword_="";
+	currentUser_ = NULL;
 	cout << std::left;
 }
 
 void AgendaUI::getOperation(void) {
 	string op;
+	startAgenda();
 	cout << "***************************Agenda v1.1****************************************" << endl;
 	cout << "*l   - log in Agenda by user name and password            *     Welcome      *" << endl;
 	cout << "*r   - register an Agenda account                         *       To         *" << endl;
@@ -27,7 +27,7 @@ void AgendaUI::getOperation(void) {
 		if (op == "credit") {
 			cout << "procduced by KenLee@2014 sysu.ss" <<endl;
 			cout << "Agenda : ~$ ";
-		} else if (userName_=="" && userPassword_=="") {
+		} else if (currentUser_ == NULL) {
 			if (op != "l" && op != "r" && op != "q") {
 				cout << "[error] wrong command!" << endl;
 				cout << "Agenda : ~$ ";
@@ -44,12 +44,13 @@ void AgendaUI::getOperation(void) {
 					executeOperation(op);
 			} else {
 				cout << "[error] wrong command!"<< endl;
-				cout << "Agenda@" << userName_<< " : # ";
+				cout << "Agenda@" << currentUser_->getName() << " : # ";
 			}
 		}
 	}
 }
 void AgendaUI::startAgenda(void) {
+	agendaService_.startAgenda();
 }
 bool AgendaUI::executeOperation(std::string op) {
 	if (op == "l") {
@@ -119,20 +120,12 @@ void AgendaUI::userLogIn(void) {
 	cout << "[log in] [user name] [password]" << endl;
 	cout << "[log in] ";
 	cin >> name >> password;
-	bool flag=false;
-	//flag= agendaService_.userLogIn(name, password);
-
-	Msg msg=sendAndGet(name,password,"l","","","","","","");
-	flag=msg.opResult;
-	list<Meeting> m=msg.meetingList;
-	
-	if (!flag) {
+	currentUser_ = agendaService_.userLogIn(name, password);
+	if (currentUser_ == NULL) {
 		cout << "[error] log in fail!" << endl;
 		cout << "Agenda : ~$ ";
 	} else  {
-		userName_=name;
-		userPassword_=password;
-		//list<Meeting> m = agendaService_.listAllMeetings(userName_);
+		list<Meeting> m = agendaService_.listAllMeetings(currentUser_->getName());
 		string m1="", m2="", m3="",e="",d1="",d2="",d3="";
 		list<Meeting>::iterator it = m.begin();
 		if(it!=m.end()){
@@ -177,7 +170,7 @@ void AgendaUI::userLogIn(void) {
 		cout << "*dm   - delete meeting by title                           *" << setw(18) << e << "*" << endl;
 		cout << "*da   - delete all meeting                                *                  *" << endl;
 		cout << "******************************************************************************" << endl;
-		cout << "Agenda@" << userName_<< " : # ";
+		cout << "Agenda@" << currentUser_->getName() << " : # ";
 	}
 }
 
@@ -186,12 +179,7 @@ void AgendaUI::userRegister(void) {
 	cout << "[register] [user name] [password] [email] [phone]" << endl;
 	cout << "[register] ";
 	cin >> name >> password >> email >> phone;
-
-	//bool flag=agendaService_.userRegister(name, password, email, phone)
-	Msg msg=sendAndGet(name,password,"r","","","","",email,phone);
-	bool flag=msg.opResult;
-
-	if (flag) {
+	if (agendaService_.userRegister(name, password, email, phone)) {
 		cout << "[register] succeed!" << endl;
 		cout << "Agenda : ~$ ";
 	} else  {
@@ -200,10 +188,10 @@ void AgendaUI::userRegister(void) {
 	}
 }
 void AgendaUI::quitAgenda(void) {
+	agendaService_.quitAgenda();
 }
 void AgendaUI::userLogOut(void) {
-	userName_="";
-	userPassword_="";
+	currentUser_ = NULL;
 	cout << "****************************Agenda v1.0***************************************" << endl;
 	cout << "*l   - log in Agenda by user name and password            *     Welcome      *" << endl;
 	cout << "*r   - register an Agenda account                         *       To         *" << endl;
@@ -212,13 +200,9 @@ void AgendaUI::userLogOut(void) {
 	cout << "Agenda : ~$ ";
 }
 void AgendaUI::deleteUser(void) {
-	//bool flag=agendaService_.deleteUser(userName_,userPassword_)
-	Msg msg=sendAndGet(userName_,userPassword_,"dc","","","","","","");
-	bool flag=msg.opResult;
-	if (flag) {
+	if (agendaService_.deleteUser(currentUser_->getName(),currentUser_->getPassword())) {
 		cout << "[delete agenda account] succeed!" << endl;
-		userName_="";
-		userPassword_="";
+		currentUser_ = NULL;
 		cout << "****************************Agenda v1.0****************************************" << endl;
 		cout << "*l   - log in Agenda by user name and password            *     Welcome      *" << endl;
 		cout << "*r   - register an Agenda account                         *       To         *" << endl;
@@ -227,7 +211,7 @@ void AgendaUI::deleteUser(void) {
 		cout << "Agenda : ~$ ";
 	} else  {
 		cout << "[error] delete agenda account fail!" << endl;
-		cout << "Agenda@" << userName_<< " : # ";
+		cout << "Agenda@" << currentUser_->getName() << " : # ";
 	}
 }
 void AgendaUI::listAllUsers(void) {
@@ -236,16 +220,13 @@ void AgendaUI::listAllUsers(void) {
 	cout << setw(15) << "phone" << endl;
 	list<User>::iterator it;
 	list<User> u;
-	//u = agendaService_.listAllUsers();
-	Msg msg=sendAndGet("","","lu","","","","","","");
-	u=msg.userList;
-
+	u = agendaService_.listAllUsers();
 	for (it = u.begin(); it != u.end(); it++) {
 		cout << setw(10) << it->getName();
 		cout << setw(20) << it->getEmail();
 		cout << setw(15) << it->getPhone() << endl;
 	}
-	cout << "Agenda@" <<userName_ << " : # ";
+	cout << "Agenda@" << currentUser_->getName() << " : # ";
 }
 void AgendaUI::createMeeting(void) {
 	cout << "[create meeting] [title] [participator] ";
@@ -254,49 +235,32 @@ void AgendaUI::createMeeting(void) {
 	cout << "[create meetings] ";
 	string name, title, participator, sTime, eTime;
 	cin >> title >> participator >> sTime >> eTime;
-	name = userName_;
-	
-	//bool flag=agendaService_.createMeeting(name, title, participator,sTime, eTime)
-	Msg msg=sendAndGet(name,"","cm",participator,title,sTime,eTime,"","");
-	bool flag=msg.opResult;
-
-	if (flag) {
+	name = currentUser_->getName();
+	if (agendaService_.createMeeting(name, title, participator,
+		sTime, eTime)) {
 			cout << "[create meeting] succeed!" << endl;
-			cout << "Agenda@" << userName_<< " : # ";
+			cout << "Agenda@" << currentUser_->getName() << " : # ";
 	} else  {
 		cout << "[error] create meeting fail!" << endl;
-		cout << "Agenda@" << userName_ << " : # ";
+		cout << "Agenda@" << currentUser_->getName() << " : # ";
 	}
 }
 void AgendaUI::listAllMeetings(void) {
 	cout << "[list all meetings]" << endl << endl;
-	list<Meeting> m;
-	//m=agendaService_.listAllMeetings(userName_)
-	Msg msg=sendAndGet(userName_,"","la","","","","","","");
-	m=msg.meetingList;
-
-	printMeetings(m);
-	cout << "Agenda@" << userName_ << " : # ";
+	printMeetings(agendaService_.listAllMeetings(currentUser_->getName()));
+	cout << "Agenda@" << currentUser_->getName() << " : # ";
 }
 void AgendaUI::listAllSponsorMeetings(void) {
 	cout << "[list all sponsor meetingd]" << endl << endl;
-	list<Meeting> m;
-	//m=agendaService_.listAllSponsorMeetings(userName_)
-	Msg msg=sendAndGet(userName_,"","las","","","","","","");
-	m=msg.meetingList;
-
-	printMeetings(m);
-	cout << "Agenda@" << userName_ << " : # ";
+	printMeetings(agendaService_.listAllSponsorMeetings(
+		currentUser_->getName()));
+	cout << "Agenda@" << currentUser_->getName() << " : # ";
 }
 void AgendaUI::listAllParticipateMeetings(void) {
 	cout << "[list all participate meetingd]" << endl << endl;
-	list<Meeting> m;
-	//m=agendaService_.listAllParticipateMeetings(userName_)
-	Msg msg=sendAndGet(userName_,"","lap","","","","","","");
-	m=msg.meetingList;
-
-	printMeetings(m);
-	cout << "Agenda@" << userName_<< " : # ";
+	printMeetings(agendaService_.listAllParticipateMeetings(
+		currentUser_->getName()));
+	cout << "Agenda@" << currentUser_->getName() << " : # ";
 }
 void AgendaUI::queryMeetingByTimeInterval(void) {
 	cout << "[query meetings] [start time(yyyy-mm-dd/hh:mm)] ";
@@ -309,17 +273,11 @@ void AgendaUI::queryMeetingByTimeInterval(void) {
 	eDate = Date::stringToDate(eTime);
 	if (sDate >eDate) {
 		cout << "[error] wrong time interval!" << endl;
-		cout << "Agenda@" << userName_ << " : # ";
+		cout << "Agenda@" << currentUser_->getName() << " : # ";
 		return;
 	}
-
-	list<Meeting> m;
-	//m=agendaService_.meetingQuery(userName_ , sTime,eTime)
-	Msg msg=sendAndGet(userName_,"","qt","","",sTime,eTime,"","");
-	m=msg.meetingList;
-
-	printMeetings(m);
-	cout << "Agenda@" << userName_<< " : # ";
+	printMeetings(agendaService_.meetingQuery(currentUser_->getName(), sTime,eTime));
+	cout << "Agenda@" << currentUser_->getName() << " : # ";
 }
 void AgendaUI::queryMeetingByTitle(void) {
 	cout << "[query meeting] [title]" << endl;
@@ -327,23 +285,17 @@ void AgendaUI::queryMeetingByTitle(void) {
 	string title;
 	cin >> title;
 	Meeting *m;
-
-	list<Meeting> mL;
-	//mL=agendaService_.meetingQuery(userName_ , sTime,eTime)
-	Msg msg=sendAndGet(userName_,"","qm","",title,"","","","");
-	mL=msg.meetingList;
-
-	if(mL.empty())
+	if(agendaService_.meetingQuery(title).empty())
 		m=NULL;
 	else
-		m = &(mL.front());
+		m = &(agendaService_.meetingQuery(title).front());
 	cout << endl;
 	cout << setw(10) << "sponsor";
 	cout << setw(15) << "participator";
 	cout << setw(20) << "start time";
 	cout << setw(20) << "end time" << endl;
 	if (m == NULL) {
-		cout << "Agenda@" << userName_ << " : # ";
+		cout << "Agenda@" << currentUser_->getName() << " : # ";
 		return;
 	}
 	cout << setw(10) << m->getSponsor();
@@ -351,36 +303,31 @@ void AgendaUI::queryMeetingByTitle(void) {
 	cout << setw(20) << Date::dateToString(m->getStartDate());
 	cout << setw(20) << Date::dateToString(m->getEndDate());
 	cout << endl << endl;
-	cout << "Agenda@" << userName_<< " : # ";
+	cout << "Agenda@" << currentUser_->getName() << " : # ";
 }
 void AgendaUI::deleteMeetingByTitle(void) {
 	cout << "[delete meeting] [title]" << endl;
 	cout << "[delete meeting] ";
 	string title;
 	cin >> title;
-	//bool flag=agendaService_.deleteMeeting(userName_, title)
-	Msg msg=sendAndGet(userName_,"","qm","",title,"","","","");
-	bool flag=msg.opResult;
-
-	if (flag) {
+	if (agendaService_.deleteMeeting(
+		currentUser_->getName(), title)) {
 			cout << "[delete meeting by title] succeed!" << endl << endl;
-			cout << "Agenda@" << userName_<< " : # ";
+			cout << "Agenda@" << currentUser_->getName() << " : # ";
 	} else {
 		cout << "[error] delete meeting fail!" << endl << endl;
-		cout << "Agenda@" <<userName_ << " : # ";
+		cout << "Agenda@" << currentUser_->getName() << " : # ";
 	}
 }
 void AgendaUI::deleteAllMeetings(void) {
-	//bool flag=agendaService_.deleteAllMeetings(userName_);;
-	Msg msg=sendAndGet(userName_,"","da","","","","","","");
-	bool flag=msg.opResult;
-
-	if (flag) {
+	bool x;
+	x = agendaService_.deleteAllMeetings(currentUser_->getName());
+	if (x) {
 		cout << "[delete all meetings] succeed!"<< endl << endl;
-		cout << "Agenda@" << userName_ << " : # ";
+		cout << "Agenda@" << currentUser_->getName() << " : # ";
 	} else {
 		cout << "[error] delete all meetings fail!" << endl << endl;
-		cout << "Agenda@" <<userName_<< " : # ";
+		cout << "Agenda@" << currentUser_->getName() << " : # ";
 	}
 }
 void AgendaUI::printMeetings(std::list<Meeting> meetings) {

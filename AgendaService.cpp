@@ -11,17 +11,17 @@ AgendaService::~AgendaService() {
 	delete storage_;
 }
 //使用匿名函数体
-bool AgendaService::userLogIn(std::string userName, std::string password) {
-	
-	list<User> cUserList=storage_->queryUser([&](const User &user){
+User* AgendaService::userLogIn(std::string userName, std::string password) {
+	std::list<User> *cUserList=new std::list<User>;
+	*cUserList=storage_->queryUser([&](const User &user){
 		if(user.getName()==userName && user.getPassword()== password)
 			return true;
 		return false;
 	});
-	if(cUserList.empty())
-		return false;
+	if(cUserList->empty())
+		return NULL;
 	else
-		return true;
+		return &(cUserList->front());
 
 }
 //如果已经有同名的User的话直接返回false
@@ -39,16 +39,19 @@ bool AgendaService::userRegister(std::string userName, std::string password,std:
 }
 //有meeting的话不能删
 bool AgendaService::deleteUser(std::string userName, std::string password) {
-	if(this->listAllMeetings(userName).empty()){
-		std::cout<<"deleting: "<<userName<<"  "<<password<<std::endl;
-		return storage_->deleteUser([&](const User user){
-			if(user.getName()==userName && user.getPassword()==password)
-				return true;
-			return false;
-		});
-	}
-	else
+	//delete Meeting
+	storage_->deleteMeeting([&](const Meeting &meeting){
+		if(meeting.getSponsor() ==  userName || meeting.getParticipator() == userName){
+			return true;
+		}
+		else false;
+	});
+	//delete operation
+	return storage_->deleteUser([&](const User user){
+		if(user.getName()==userName && user.getPassword()==password)
+			return true;
 		return false;
+	});
 }
 std::list<User> AgendaService::listAllUsers(void) {
 	return storage_->queryUser([&](const User user){
@@ -64,20 +67,26 @@ bool AgendaService::createMeeting(std::string userName, std::string title,std::s
 	}).size()!=2)
 		return false;
 	//如果已经有同名的会议
-	if(!this->meetingQuery(title).empty())
+	if(!this->meetingQuery(userName,title).empty())
+		return false;
+	if(!this->meetingQuery(participator,title).empty())
+		return false;
+	if(!this->meetingQuery(userName,startDate,endDate).empty())
+		return false;
+	if(!this->meetingQuery(participator,startDate,endDate).empty())
 		return false;
 	//如果时间不合法
 	Date sDate=Date::stringToDate(startDate);
 	Date eDate=Date::stringToDate(endDate);
-	if(sDate>eDate || !Date::isValid(sDate) || !Date::isValid(eDate))
+	if(sDate>=eDate || !Date::isValid(sDate) || !Date::isValid(eDate))
 		return false;
 	//创建会议
 	storage_->createMeeting(Meeting(userName,participator,sDate,eDate,title));
 	return true;
 }
-std::list<Meeting> AgendaService::meetingQuery(std::string title) {
+std::list<Meeting> AgendaService::meetingQuery(std::string userName,std::string title) {
 	return storage_->queryMeeting([&](const Meeting meeting){
-		if (meeting.getTitle()==title)
+		if (meeting.getTitle()==title&&(meeting.getSponsor()==userName||meeting.getParticipator()==userName))
 			return true;
 		else
 			return false;
@@ -87,7 +96,7 @@ std::list<Meeting> AgendaService::meetingQuery(std::string userName, std::string
 	Date sDate=Date::stringToDate(startDate);
 	Date eDate=Date::stringToDate(endDate);
 	return storage_->queryMeeting([&](const Meeting meeting){
-		if(sDate<meeting.getEndDate() && meeting.getStartDate()<eDate &&
+		if((sDate<eDate) && sDate<meeting.getEndDate() && meeting.getStartDate()<eDate &&
 			(meeting.getSponsor()==userName || meeting.getParticipator()==userName))
 			return true;
 		else

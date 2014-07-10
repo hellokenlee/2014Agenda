@@ -10,8 +10,7 @@
 #include <functional>
 #include <fstream>
 #include <sstream>
-#include <boost/property_tree/ptree.hpp>
-#include <boost/property_tree/json_parser.hpp>
+
 #include "User.h"
 #include "Meeting.h"
 

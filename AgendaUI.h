@@ -1,12 +1,9 @@
 #ifndef AGENDAUI_H
 #define AGENDAUI_H
 
+#include "AgendaService.h"
 #include <iostream>
 #include <string>
-#include <iostream>
-#include <iomanip>
-#include <cstdlib>
-#include "client.h"
 
 class AgendaUI {
  public:
@@ -35,8 +32,8 @@ class AgendaUI {
   // own functions
   std::string getCmd(void);
   // dates
-  std::string userName_;
-  std::string userPassword_;
+  User *currentUser_;
+  AgendaService agendaService_;
 };
 
 #endif
