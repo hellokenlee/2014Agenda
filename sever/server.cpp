@@ -202,7 +202,7 @@ using boost::asio::ip::tcp;
 		phone="";
 		system::error_code ignored_error;
 		system::error_code error;
-		std::array<char,1000> buf;
+		boost::array<char,1000> buf;
 		tcp::socket socket(io_service);
 		acceptor.accept(socket);
 

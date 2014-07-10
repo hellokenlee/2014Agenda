@@ -6,11 +6,15 @@
 #include <string>
 #include <sstream>
 #include <list>
-#include <boost/property_tree/ptree.hpp>
-#include <boost/property_tree/json_parser.hpp>
 #include "Meeting.h"
 #include "User.h"
+
+//BOOST ø‚“˝”√
+#define WIN32_LEAN_AND_MEAN     // Exclude rarely-used stuff from Windows headers  
+#include <boost/property_tree/ptree.hpp>
+#include <boost/property_tree/json_parser.hpp>
 #include <boost/asio.hpp>
+
 using namespace std;
 //Message dataStructures
 struct Msg

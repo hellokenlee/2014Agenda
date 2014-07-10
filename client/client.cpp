@@ -1,5 +1,5 @@
 #include "client.h"
-
+#define WIN32_LEAN_AND_MEAN     // Exclude rarely-used stuff from Windows headers  
 /*
 client send socket  command message in a json format string like:
 
@@ -113,7 +113,7 @@ string communicateWithServer(string cmd){
 	tcp::socket socket(io_service);
 	tcp::endpoint end_point(boost::asio::ip::address::from_string("127.0.0.1"), 3200);
 	socket.connect(end_point);
-	std::array<char, 1000> buf;
+	boost::array<char, 1000> buf;
 	boost::system::error_code error;
 	system::error_code ignored_error;
 

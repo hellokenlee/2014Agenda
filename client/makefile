@@ -1,13 +1,13 @@
 #参数设定
 CC=g++
-FLAG= -c -std=c++11  -lboost_system -lboost_filesystem
+FLAG= -c -std=c++0x  -lboost_system -lboost_filesystem
 EXEC=Agenda
 OBJECTS = Agenda.o AgendaUI.o \
 Date.o User.o Meeting.o client.o
 
 #可执行文件
 $(EXEC): $(OBJECTS) 
-	$(CC) -o $(EXEC) $(OBJECTS) -lboost_system -lboost_filesystem
+	$(CC) -o $(EXEC) $(OBJECTS) -lboost_system -lboost_filesystem -lpthread
 #中间文件
 Agenda.o: Agenda.cpp 
 	$(CC) $(FLAG) Agenda.cpp
